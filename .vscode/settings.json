@@ -4,6 +4,14 @@
         "request",
         "makefolder",
         "cloneref",
-        "writefile"
+        "writefile",
+        "readfile",
+        "queue_on_teleport",
+        "isfile",
+        "identifyexecutor",
+        "getgenv",
+        "isfolder",
+        "vape",
+        "getcustomasset"
     ]
 }
