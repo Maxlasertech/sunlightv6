@@ -1,0 +1,9 @@
+{
+    "robloxLsp.diagnostics.globals": [
+        "http",
+        "request",
+        "makefolder",
+        "cloneref",
+        "writefile"
+    ]
+}
