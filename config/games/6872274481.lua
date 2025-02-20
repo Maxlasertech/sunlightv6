@@ -23,7 +23,7 @@ local contextActionService = cloneref(game:GetService('ContextActionService'))
 local coreGui = cloneref(game:GetService('CoreGui'))
 local starterGui = cloneref(game:GetService('StarterGui'))
 
-local isnetworkowner = identifyexecutor and table.find({'AWP', 'Nihon'}, ({identifyexecutor()})[1]) and isnetworkowner or function()
+local isnetworkowner = isnetworkowner or function()
 	return true
 end
 local gameCamera = workspace.CurrentCamera
@@ -57,7 +57,8 @@ local store = {
 	inventories = {},
 	matchState = 0,
 	queueType = 'bedwars_test',
-	tools = {}
+	tools = {},
+	lastattack = tick()
 }
 local Reach = {}
 local HitBoxes = {}
@@ -720,7 +721,6 @@ run(function()
 			return rawget(self, ind)
 		end
 	})
-	getgenv().bedwars = bedwars
 
 	local remoteNames = {
 		AckKnockback = debug.getproto(debug.getproto(Knit.Controllers.KnockbackController.KnitStart, 1), 1),
@@ -734,7 +734,7 @@ run(function()
 		ConsumeSoul = Knit.Controllers.GrimReaperController.consumeSoul,
 		ConsumeTreeOrb = debug.getproto(Knit.Controllers.EldertreeController.createTreeOrbInteraction, 1),
 		DepositPinata = debug.getproto(debug.getproto(Knit.Controllers.PiggyBankController.KnitStart, 2), 5),
-		DragonBreath = debug.getproto(Knit.Controllers.VoidDragonController.KnitStart, 4),
+		DragonBreath = if identifyexecutor() == 'Salad' then function() end else debug.getproto(Knit.Controllers.VoidDragonController.KnitStart, 4),
 		DragonEndFly = debug.getproto(Knit.Controllers.VoidDragonController.flapWings, 1),
 		DragonFly = Knit.Controllers.VoidDragonController.flapWings,
 		DropItem = Knit.Controllers.ItemDropController.dropItemInHand,
@@ -744,7 +744,7 @@ run(function()
 		GuitarHeal = Knit.Controllers.GuitarController.performHeal,
 		HannahKill = debug.getproto(Knit.Controllers.HannahController.KnitStart, 2),
 		HarvestCrop = debug.getproto(debug.getproto(Knit.Controllers.CropController.KnitStart, 4), 1),
-		KaliyahPunch = debug.getproto(debug.getproto(Knit.Controllers.DragonSlayerController.KnitStart, 2), 1),
+		KaliyahPunch = if identifyexecutor() == 'Salad' then function() end else debug.getproto(debug.getproto(Knit.Controllers.DragonSlayerController.KnitStart, 2), 1),
 		MageSelect = debug.getproto(Knit.Controllers.MageController.registerTomeInteraction, 1),
 		MinerDig = debug.getproto(Knit.Controllers.MinerController.setupMinerPrompts, 1),
 		PickupItem = Knit.Controllers.ItemDropController.checkForPickup,
@@ -990,8 +990,8 @@ run(function()
 		end
 
 		if new.Game ~= old.Game then
-			getgenv().store.matchState = new.Game.matchState
-			getgenv().store.queueType = new.Game.queueType or 'bedwars_test'
+			store.matchState = new.Game.matchState
+			store.queueType = new.Game.queueType or 'bedwars_test'
 		end
 
 		if new.Inventory ~= old.Inventory then
@@ -1760,7 +1760,7 @@ run(function()
 				end))
 				Fly:Clean(runService.PreSimulation:Connect(function(dt)
 					if entitylib.isAlive and not InfiniteFly.Enabled and isnetworkowner(entitylib.character.RootPart) then
-						local flyAllowed = (lplr.Character:GetAttribute('InflatedBalloons') and lplr.Character:GetAttribute('InflatedBalloons') > 0) or getgenv().store.matchState == 2
+						local flyAllowed = (lplr.Character:GetAttribute('InflatedBalloons') and lplr.Character:GetAttribute('InflatedBalloons') > 0) or store.matchState == 2
 						local mass = (1.5 + (flyAllowed and 6 or 0) * (tick() % 0.4 < 0.2 and -1 or 1)) + ((up + down) * VerticalValue.Value)
 						local root, moveDirection = entitylib.character.RootPart, entitylib.character.Humanoid.MoveDirection
 						local velo = getSpeed()
@@ -1976,25 +1976,25 @@ run(function()
 	local up, down = 0, 0
 	local success, proper = false, true
 	local clone, hip, valid
-	getgenv().oldroot = nil
+	local oldroot = nil
 	
 	local function doClone()
 		if entitylib.isAlive and entitylib.character.Humanoid.Health > 0 then
 			hip = entitylib.character.Humanoid.HipHeight
-			getgenv().oldroot = entitylib.character.HumanoidRootPart
+			oldroot = entitylib.character.HumanoidRootPart
 			if not lplr.Character.Parent then return false end
 			lplr.Character.Parent = game
-			clone = getgenv().oldroot:Clone()
+			clone = oldroot:Clone()
 			clone.Parent = lplr.Character
-			getgenv().oldroot.Parent = gameCamera
-			bedwars.QueryUtil:setQueryIgnored(getgenv().oldroot, true)
-			clone.CFrame = getgenv().oldroot.CFrame
+			oldroot.Parent = gameCamera
+			bedwars.QueryUtil:setQueryIgnored(oldroot, true)
+			clone.CFrame = oldroot.CFrame
 			lplr.Character.PrimaryPart = clone
 			lplr.Character.Parent = workspace
 			for _, v in lplr.Character:GetDescendants() do
 				if v:IsA('Weld') or v:IsA('Motor6D') then
-					if v.Part0 == getgenv().oldroot then v.Part0 = clone end
-					if v.Part1 == getgenv().oldroot then v.Part1 = clone end
+					if v.Part0 == oldroot then v.Part0 = clone end
+					if v.Part1 == oldroot then v.Part1 = clone end
 				end
 			end
 			return true
@@ -2003,16 +2003,16 @@ run(function()
 	end
 	
 	local function revertClone()
-		if not getgenv().oldroot or not getgenv().oldroot.Parent or not entitylib.isAlive then return false end
+		if not oldroot or not oldroot.Parent or not entitylib.isAlive then return false end
 		lplr.Character.Parent = game
-		getgenv().oldroot.Parent = lplr.Character
-		lplr.Character.PrimaryPart = getgenv().oldroot
+		oldroot.Parent = lplr.Character
+		lplr.Character.PrimaryPart = oldroot
 		lplr.Character.Parent = workspace
-		getgenv().oldroot.CanCollide = true
+		oldroot.CanCollide = true
 		for _, v in lplr.Character:GetDescendants() do
 			if v:IsA('Weld') or v:IsA('Motor6D') then
-				if v.Part0 == clone then v.Part0 = getgenv().oldroot end
-				if v.Part1 == clone then v.Part1 = getgenv().oldroot end
+				if v.Part0 == clone then v.Part0 = oldroot end
+				if v.Part1 == clone then v.Part1 = oldroot end
 			end
 		end
 		local oldclonepos = clone.Position.Y
@@ -2020,11 +2020,11 @@ run(function()
 			clone:Destroy()
 			clone = nil
 		end
-		local origcf = {getgenv().oldroot.CFrame:GetComponents()}
+		local origcf = {oldroot.CFrame:GetComponents()}
 		if valid then origcf[2] = oldclonepos end
-		getgenv().oldroot.CFrame = CFrame.new(unpack(origcf))
-		getgenv().oldroot.Transparency = 1
-		getgenv().oldroot = nil
+		oldroot.CFrame = CFrame.new(unpack(origcf))
+		oldroot.Transparency = 1
+		oldroot = nil
 		entitylib.character.Humanoid.HipHeight = hip or 2
 	end
 	
@@ -2068,13 +2068,13 @@ run(function()
 						root.CFrame += destination
 						root.AssemblyLinearVelocity = (moveDirection * velo) + Vector3.new(0, mass, 0)
 	
-						local speedCFrame = {getgenv().oldroot.CFrame:GetComponents()}
-						if isnetworkowner(getgenv().oldroot) then
+						local speedCFrame = {oldroot.CFrame:GetComponents()}
+						if isnetworkowner(oldroot) then
 							speedCFrame[1] = clone.CFrame.X
 							speedCFrame[3] = clone.CFrame.Z
 							if speedCFrame[2] < 2000 then speedCFrame[2] = 100000 end
-							getgenv().oldroot.CFrame = CFrame.new(unpack(speedCFrame))
-							getgenv().oldroot.Velocity = Vector3.new(clone.Velocity.X, getgenv().oldroot.Velocity.Y, clone.Velocity.Z)
+							oldroot.CFrame = CFrame.new(unpack(speedCFrame))
+							oldroot.Velocity = Vector3.new(clone.Velocity.X, oldroot.Velocity.Y, clone.Velocity.Z)
 						else
 							speedCFrame[2] = clone.CFrame.Y
 							clone.CFrame = CFrame.new(unpack(speedCFrame))
@@ -2107,38 +2107,38 @@ run(function()
 					end)
 				end
 			else
-				if success and clone and getgenv().oldroot and proper then
+				if success and clone and oldroot and proper then
 					proper = false
 					overlapCheck.FilterDescendantsInstances = {lplr.Character, gameCamera}
-					overlapCheck.CollisionGroup = getgenv().oldroot.CollisionGroup
-					local ray = workspace:Blockcast(CFrame.new(getgenv().oldroot.Position.X, clone.CFrame.p.Y, getgenv().oldroot.Position.Z), Vector3.new(3, entitylib.character.HipHeight, 3), Vector3.new(0, -1000, 0), rayCheck)
+					overlapCheck.CollisionGroup = oldroot.CollisionGroup
+					local ray = workspace:Blockcast(CFrame.new(oldroot.Position.X, clone.CFrame.p.Y, oldroot.Position.Z), Vector3.new(3, entitylib.character.HipHeight, 3), Vector3.new(0, -1000, 0), rayCheck)
 					local origcf = {clone.CFrame:GetComponents()}
-					origcf[1] = getgenv().oldroot.Position.X
+					origcf[1] = oldroot.Position.X
 					origcf[2] = ray and ray.Position.Y + entitylib.character.HipHeight or clone.CFrame.p.Y
-					origcf[3] = getgenv().oldroot.Position.Z
-					getgenv().oldroot.CanCollide = true
-					getgenv().oldroot.Transparency = 0
-					getgenv().oldroot.Velocity = clone.Velocity * Vector3.new(1, 0, 1)
-					getgenv().oldroot.CFrame = CFrame.new(unpack(origcf))
+					origcf[3] = oldroot.Position.Z
+					oldroot.CanCollide = true
+					oldroot.Transparency = 0
+					oldroot.Velocity = clone.Velocity * Vector3.new(1, 0, 1)
+					oldroot.CFrame = CFrame.new(unpack(origcf))
 	
 					local touched = false
 					local connection = runService.PreSimulation:Connect(function()
-						if getgenv().oldroot then
-							getgenv().oldroot.Velocity = Vector3.zero
+						if oldroot then
+							oldroot.Velocity = Vector3.zero
 							valid = false
 							if touched then return end
 							local cf = {clone.CFrame:GetComponents()}
-							cf[2] = getgenv().oldroot.CFrame.Y
+							cf[2] = oldroot.CFrame.Y
 							local newcf = CFrame.new(unpack(cf))
-							for _, v in workspace:GetPartBoundsInBox(newcf, getgenv().oldroot.Size, overlapCheck) do
+							for _, v in workspace:GetPartBoundsInBox(newcf, oldroot.Size, overlapCheck) do
 								if (v.Position.Y + (v.Size.Y / 2)) > (newcf.p.Y + 0.5) then
 									touched = true
 									return
 								end
 							end
 							if not workspace:Raycast(newcf.Position, Vector3.new(0, -entitylib.character.HipHeight, 0), rayCheck) then return end
-							getgenv().oldroot.CFrame = newcf
-							getgenv().oldroot.Velocity = (clone.Velocity * Vector3.new(1, 0, 1))
+							oldroot.CFrame = newcf
+							oldroot.Velocity = (clone.Velocity * Vector3.new(1, 0, 1))
 							valid = true
 						end
 					end)
@@ -2148,7 +2148,7 @@ run(function()
 						notif('InfiniteFly', 'Landed!', 1)
 						connection:Disconnect()
 						proper = true
-						if getgenv().oldroot and clone then 
+						if oldroot and clone then 
 							revertClone() 
 						end
 					end)
@@ -2196,6 +2196,8 @@ run(function()
 end)
 
 local Attacking
+local antihitregtime = nil :: table
+local antihitting = false :: boolean
 run(function()
 	local Killaura
 	local Targets
@@ -2389,6 +2391,9 @@ run(function()
 									bedwars.SwordController.lastAttack = workspace:GetServerTimeNow()
 									store.attackReach = (delta.Magnitude * 100) // 1 / 100
 									store.attackReachUpdate = tick() + 1
+									if not antihitting then
+										store.lastattack = tick() + (vape.Modules.AntiHit.Enabled and antihitregtime.Value or 0)
+									end
 									AttackRemote:FireServer({
 										weapon = sword.tool,
 										chargedAttack = {chargeRatio = meta.sword.chargedAttack and not meta.sword.chargedAttack.disableOnGrounded and 0.999 or 0},
@@ -8456,32 +8461,7 @@ run(function()
 	})
 end)
 
-run(function()
-	local infinitejump = nil :: table
-	local infinitejumpmode = nil :: table
-	infinitejump = vape.Categories.Blatant:CreateModule({
-		Name = 'InfiniteJump',
-		Function = function(call)
-			if call then
-				infinitejump:Clean(inputService.JumpRequest:Connect(function()
-					if entitylib.isAlive then
-						if infinitejumpmode == 'State' then
-							lplr.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-						else
-							lplr.Character.PrimaryPart.Velocity += Vector3.new(0, 10, 0)
-						end
-					end
-				end))
-			end
-		end
-	})
-	infinitejumpmode = infinitejump:CreateDropdown({
-		Name = 'Mode',
-		List = {'State', 'Velocity'},
-		Default = 'State'
-	})
-end)
-
+local bedtppos = nil
 run(function()
 	local bedtp = nil :: table
 	bedtp = vape.Categories.Utility:CreateModule({
@@ -8490,11 +8470,16 @@ run(function()
 			if call then
 				local bed = getBed() :: Model?
 				if bed and entitylib.isAlive and store.matchState ~= 0 then
+					if vape.Modules.AutoRewind.Enabled then
+						vape.Modules.AutoRewind:Toggle()
+					end
 					if not vape.Modules.AutoWin.Enabled then
+						lplr.Character.Humanoid.Health = 0
 						lplr.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Dead)
 						lplr.CharacterAdded:Wait()
+						task.wait(0.2)
 					end
-					task.wait(0.2)
+					bedtppos = bed.Bed.Position
 					tweenService:Create(lplr.Character.PrimaryPart, TweenInfo.new(0.8), {CFrame = bed.Bed.CFrame + Vector3.new(0, 10, 0)}):Play()
 				end
 				bedtp:Toggle()
@@ -8520,12 +8505,18 @@ run(function()
 				})[1]
 				if plr and entitylib.isAlive and store.matchState ~= 0 then
 					if not vape.Modules.AutoWin.Enabled then
+						lplr.Character.Humanoid.Health = 0
 						lplr.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Dead)
 						lplr.CharacterAdded:Wait()
+						task.wait(0.2)
 					end
-					task.wait(0.2)
+					if vape.Modules.AutoRewind.Enabled then
+						vape.Modules.AutoRewind:Toggle()
+					end
+					local tween = tweenService:Create(entitylib.character.HumanoidRootPart, TweenInfo.new(0.8), {CFrame = plr.RootPart.CFrame})
+					tween:Play()
+					tween.Completed:Wait()
 					playertpTarget = plr
-					tweenService:Create(lplr.Character.PrimaryPart, TweenInfo.new(0.8), {CFrame = plr.RootPart.CFrame}):Play()
 				end
 				playertp:Toggle()
 			end
@@ -8539,46 +8530,54 @@ end)
 run(function()
 	local autowin = nil :: table
 	local autowinthread = nil :: thread
+	local resetchar = bedwars.Client:Get('ResetCharacter')
 	autowin = vape.Categories.Utility:CreateModule({
 		Name = 'AutoWin',
 		Function = function(call)
 			if call then
-				lplr.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Dead)
+				repeat task.wait(0.1) until store.matchState ~= 0
+				resetchar:SendToServer()
 				autowin:Clean(lplr.CharacterAdded:Connect(function()
+					pcall(task.cancel, autowinthread)
+					playertpTarget = nil
 					local beds = getBed()
+					task.wait(0.25)
 					if beds then
 						vape.Modules.BedTP:Toggle()
 					else
 						vape.Modules.PlayerTP:Toggle()
 						autowinthread = task.spawn(function()
 							repeat
-								if entitylib.isAlive then
-									lplr.Character.PrimaryPart.CFrame = playertpTarget.RootPart.CFrame
+								if entitylib.isAlive and playertpTarget then
+									entitylib.character.HumanoidRootPart.CFrame = playertpTarget.RootPart.CFrame
 								end
 								task.wait()
 							until false
 						end)
 					end
-					task.delay(0.8, function()
-						if not isnetworkowner(lplr.Character.PrimaryPart) then
-							lplr.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Dead)
+					task.delay(1.2, function()
+						local suc, res = pcall(function()
+							if beds and (bedtppos - entitylib.character.HumanoidRootPart.Position).Magnitude >= 15 or not beds and (playertpTarget.RootPart.Position - entitylib.character.HumanoidRootPart.Position).Magnitude >= 15 then
+								resetchar:SendToServer()
+							end --> tried isnetworkowner and didnt work on salad
+						end)
+						if not suc then
+							resetchar:SendToServer()
 						end
 					end)
 				end))
 				autowin:Clean(vapeEvents.BedwarsBedBreak.Event:Connect(function(bedTable)
 					if bedTable.player.UserId == lplr.UserId then
-						task.wait(0.2)
-						lplr.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Dead)
+						resetchar:SendToServer()
 					end
 				end))
 				autowin:Clean(vapeEvents.EntityDeathEvent.Event:Connect(function(deathTable)
-					if deathTable.finalKill then
-						local killed = playersService:GetPlayerFromCharacter(deathTable.entityInstance)
-						if killed == playertpTarget.Entity then
-							pcall(task.cancel, autowinthread)
-							task.wait(0.2)
-							lplr.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Dead)
-						end
+					local killed = playersService:GetPlayerFromCharacter(deathTable.entityInstance)
+					if playertpTarget and killed == playertpTarget.Entity then
+						pcall(task.cancel, autowinthread)
+						task.delay(0.4, function()
+							resetchar:SendToServer()
+						end)
 					end
 				end))
 			end
@@ -8596,20 +8595,28 @@ run(function()
 			end
 		end,
 		Velo = function()
-			lplr.Character.PrimaryPart.Velocity += Vector3.new(0, 200, 0)
+			for i = 1, 30 do
+				lplr.Character.PrimaryPart.Velocity += Vector3.new(0, i, 0)
+				task.wait(0.03)
+			end
 		end
 	} :: {() -> ()}
 	local antideathmode = nil :: table
+
+	local lasthit = tick()
 	antideath = vape.Categories.Blatant:CreateModule({
 		Name = 'AntiDeath',
 		Tooltip = 'i hate black individuals',
 		Function = function(call)
 			if call then
 				if entitylib.isAlive then
+					local oldhp = nil
 					antideath:Clean(lplr.Character.Humanoid:GetPropertyChangedSignal('Health'):Connect(function()
-						if (lplr.Character.Humanoid.MaxHealth - lplr.Character.Humanoid.Health) < antideathvalue.Value then
-							antideathmodes[antideathmode.Value]()
+						if tick() > lasthit and lplr.Character.Humanoid.Health < (lplr.Character.Humanoid.MaxHealth - antideathvalue.Value) and (oldhp and oldhp > lplr.Character.Humanoid.Health and false or true) then
+							oldhp = lplr.Character.Humanoid.Health
 							notif('Vape', 'Triggered antideath function.', 10, 'alert')
+							lasthit = tick() + 1.2
+							antideathmodes[antideathmode.Value]()
 						end
 					end))
 				end
@@ -8639,7 +8646,6 @@ run(function()
 	
 	local params = RaycastParams.new() :: RaycastParams
 	params.FilterDescendantsInstances = {AntiFallPart}
-	params.FilterType = Enum.RaycastFilterType.Exclude
 
 	local origin = nil :: CFrame
 
@@ -8649,14 +8655,16 @@ run(function()
 			if call then
 				if entitylib.isAlive then
 					autorewind:Clean(lplr.Character.Humanoid:GetPropertyChangedSignal('Health'):Connect(function()
-						local ray = workspace:Raycast(lplr.Character.PrimaryPart.Position, Vector3.new(0, -50, 0), params)
+						local ray = workspace:Raycast(entitylib.character.HumanoidRootPart.Position, Vector3.new(0, -50, 0), params)
 						if ray and autorewindraycast.Enabled then
-							origin = lplr.Character.PrimaryPart.CFrame
+							origin = entitylib.character.HumanoidRootPart.CFrame
 						end
 					end))
 				end
 				autorewind:Clean(lplr.CharacterAdded:Connect(function(char)
+					task.wait(0.3)
 					tweenService:Create(char.PrimaryPart, TweenInfo.new(0.8), {CFrame = origin}):Play()
+					origin = nil
 					autorewind:Toggle()
 					autorewind:Toggle()
 				end))
@@ -8666,5 +8674,128 @@ run(function()
 	autorewindraycast = autorewind:CreateToggle({
 		Name = 'Raycast',
 		Default = true
+	})
+end)
+
+run(function()
+	local antihit = nil :: table
+	local antihitrange = nil :: table
+	local antihitgroundtime = nil :: table
+	local antihitincludenpc = nil :: table
+	local antihitsettings = nil :: table
+
+	local oldroot
+	local clone
+
+	local function createClone()
+		if entitylib.isAlive and entitylib.character.Humanoid.Health > 0 and (not oldroot or not oldroot.Parent) then
+			hip = entitylib.character.Humanoid.HipHeight
+			oldroot = entitylib.character.HumanoidRootPart
+			if not lplr.Character.Parent then return false end
+			lplr.Character.Parent = game
+			clone = oldroot:Clone()
+			clone.Parent = lplr.Character
+			oldroot.Parent = gameCamera
+			bedwars.QueryUtil:setQueryIgnored(oldroot, true)
+			clone.CFrame = oldroot.CFrame
+			lplr.Character.PrimaryPart = clone
+			lplr.Character.Parent = workspace
+			for _, v in lplr.Character:GetDescendants() do
+				if v:IsA('Weld') or v:IsA('Motor6D') then
+					if v.Part0 == oldroot then v.Part0 = clone end
+					if v.Part1 == oldroot then v.Part1 = clone end
+				end
+			end
+			return true
+		end
+		return false
+	end
+	
+	local function destroyClone()
+		if not oldroot or not oldroot.Parent or not entitylib.isAlive then return false end
+		lplr.Character.Parent = game
+		oldroot.Parent = lplr.Character
+		lplr.Character.PrimaryPart = oldroot
+		lplr.Character.Parent = workspace
+		oldroot.CanCollide = true
+		for _, v in lplr.Character:GetDescendants() do
+			if v:IsA('Weld') or v:IsA('Motor6D') then
+				if v.Part0 == clone then v.Part0 = oldroot end
+				if v.Part1 == clone then v.Part1 = oldroot end
+			end
+		end
+		local oldcf = clone.CFrame
+		if clone then
+			clone:Destroy()
+			clone = nil
+		end
+		oldroot.Transparency = 1
+		oldroot = nil
+		entitylib.character.Humanoid.HipHeight = hip or 2
+	end
+
+	antihit = vape.Categories.Blatant:CreateModule({
+		Name = 'AntiHit',
+		Function = function(call)
+			if call then
+				antihit:Clean(runService.PreSimulation:Connect(function()
+					local cf = clone and clone.Parent and {clone.CFrame:GetComponents()} or {entitylib.character.HumanoidRootPart.CFrame:GetComponents()}
+					if store.KillauraTarget and not antihitting then
+						cf[2] = store.KillauraTarget.Character.PrimaryPart.CFrame.Y
+					end
+					if oldroot and oldroot.Parent then
+						oldroot.CFrame = antihitting and (tick() - entitylib.character.AirTime) < 2 and CFrame.new(clone.CFrame.X, oldroot.CFrame.Y, clone.CFrame.Z) or CFrame.new(unpack(cf))
+					end
+				end))
+				repeat
+					local plr = entitylib.AllPosition({
+						Range = antihitrange.Value,
+						Part = 'RootPart',
+						Players = antihitsettings.Players.Enabled,
+						NPCs = antihitsettings.NPCs.Enabled,
+						Limit = 1
+					})[1]
+					local hittable = tick() < store.lastattack
+					if vape.Modules.InfiniteFly.Enabled then task.wait() continue end
+					if plr then
+						createClone()
+						antihitting = hittable
+						if hittable and (tick() - entitylib.character.AirTime) < 2 then
+							oldroot.CFrame += Vector3.new(0, 70, 0)
+						end
+					else
+						antihitting = false
+						destroyClone()
+					end
+					task.wait(0.1 + antihitgroundtime.Value)
+				until not antihit.Enabled
+			else
+				destroyClone()
+			end
+		end
+	})
+	antihitsettings = antihit:CreateTargets({
+		Players = true, 
+		NPCs = false
+	})
+	antihitrange = antihit:CreateSlider({
+		Name = 'Range',
+		Min = 1,
+		Max = 40,
+		Default = 25
+	})
+	antihitregtime = antihit:CreateSlider({
+		Name = 'Register Time',
+		Decimal = 6,
+		Min = 0.1,
+		Max = 1,
+		Default = 0.15
+	})
+	antihitgroundtime = antihit:CreateSlider({
+		Name = 'Ground Time',
+		Decimal = 6,
+		Min = 0,
+		Max = 2,
+		Default = 0.2
 	})
 end)

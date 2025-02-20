@@ -7970,3 +7970,28 @@ run(function()
 	
 end)
 	
+run(function()
+	local infinitejump = nil :: table
+	local infinitejumpmode = nil :: table
+	infinitejump = vape.Categories.Blatant:CreateModule({
+		Name = 'InfiniteJump',
+		Function = function(call)
+			if call then
+				infinitejump:Clean(inputService.JumpRequest:Connect(function()
+					if entitylib.isAlive then
+						if infinitejumpmode.Value == 'State' then
+							lplr.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+						else
+							lplr.Character.PrimaryPart.Velocity = Vector3.new(0, 60, 0)
+						end
+					end
+				end))
+			end
+		end
+	})
+	infinitejumpmode = infinitejump:CreateDropdown({
+		Name = 'Mode',
+		List = {'State', 'Velocity'},
+		Default = 'State'
+	})
+end)

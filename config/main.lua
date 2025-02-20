@@ -30,7 +30,7 @@ local playersService = cloneref(game:GetService('Players'))
 local function downloadFile(path, func)
 	if not isfile(path) then
 		local suc, res = pcall(function()
-			return game:HttpGet('https://raw.githubusercontent.com/QP-Offcial/VapeV4ForRoblox/'..readfile('newvape/profiles/commit.txt')..'/'..select(1, path:gsub('newvape/', '')), true)
+			return game:HttpGet('https://raw.githubusercontent.com/maxlasertech/sunlightv6/'..readfile('newvape/profiles/commit.txt')..'/config/'..select(1, path:gsub('newvape/', '')), true)
 		end)
 		if not suc or res == '404: Not Found' then
 			error(res)
@@ -61,8 +61,6 @@ local function finishLoading()
 				shared.vapereload = true
 				if shared.VapeDeveloper then
 					loadstring(readfile('newvape/loader.lua'), 'loader')()
-				else
-					loadstring(game:HttpGet('https://raw.githubusercontent.com/QP-Offcial/VapeV4ForRoblox/'..readfile('newvape/profiles/commit.txt')..'/loader.lua', true), 'loader')()
 				end
 			]]
 			if shared.VapeDeveloper then
@@ -93,34 +91,16 @@ if not isfolder('newvape/assets/'..gui) then
 	makefolder('newvape/assets/'..gui)
 end
 vape = loadstring(downloadFile('newvape/guis/'..gui..'.lua'), 'gui')()
--- shared.vape = vape
-
-local XFunctions = loadstring(downloadFile('newvape/libraries/XFunctions.lua'), 'XFunctions')()
-XFunctions:SetGlobalData('XFunctions', XFunctions)
-XFunctions:SetGlobalData('vape', vape)
-
-getgenv().InfoNotification = function(title, msg, dur)
-	warn('info', tostring(title), tostring(msg), tostring(dur))
-	vape:CreateNotification(title, msg, dur)
-end
-getgenv().warningNotification = function(title, msg, dur)
-	warn('warn', tostring(title), tostring(msg), tostring(dur))
-	vape:CreateNotification(title, msg, dur, 'warning')
-end
-getgenv().errorNotification = function(title, msg, dur)
-	warn("error", tostring(title), tostring(msg), tostring(dur))
-	vape:CreateNotification(title, msg, dur, 'alert')
-end
+shared.vape = vape
 
 if not shared.VapeIndependent then
 	loadstring(downloadFile('newvape/games/universal.lua'), 'universal')()
-	loadstring(downloadFile('newvape/games/modules.lua'), 'modules')()
 	if isfile('newvape/games/'..game.PlaceId..'.lua') then
 		loadstring(readfile('newvape/games/'..game.PlaceId..'.lua'), tostring(game.PlaceId))(...)
 	else
 		if not shared.VapeDeveloper then
 			local suc, res = pcall(function()
-				return game:HttpGet('https://raw.githubusercontent.com/QP-Offcial/VapeV4ForRoblox/'..readfile('newvape/profiles/commit.txt')..'/games/'..game.PlaceId..'.lua', true)
+				return game:HttpGet('https://raw.githubusercontent.com/maxlasertech/sunlightv6/'..readfile('newvape/profiles/commit.txt')..'config/games/'..game.PlaceId..'.lua', true)
 			end)
 			if suc and res ~= '404: Not Found' then
 				loadstring(downloadFile('newvape/games/'..game.PlaceId..'.lua'), tostring(game.PlaceId))(...)
