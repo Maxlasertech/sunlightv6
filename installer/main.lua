@@ -2,19 +2,8 @@ local request = http and http.request or request
 local config = 'SunlightV6' :: string
 local httpservice = cloneref(game:FindService('HttpService'))
 
-local writefile = function(file: string, code: string)
-    local folders = file:split('/') :: table
-    local decoyfolder = {} :: table
-    if (#folders - 1) > 0 then
-        for i = 1, (#folders - 1) do
-            if not isfolder(folders[i]) then
-                makefolder(`{table.concat(decoyfolder, '/')}/{folders[i]}`)
-                warn('made '.. folders[i])
-                table.insert(decoyfolder, folders[i])
-            end
-        end
-    end
-    return getgenv().writefile(file, code)
+for i,v in {'newvape', 'newvape/assets', 'newvape/libraries', 'newvape/profiles', 'newvape/games'} do
+    makefolder(v)
 end
 
 local result = request({
