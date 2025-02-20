@@ -8750,6 +8750,7 @@ run(function()
 					end
 				end))
 				repeat
+				        if store.matchState == 0 then task.wait() continue end																																																																																																																																																														
 					local plr = entitylib.AllPosition({
 						Range = antihitrange.Value,
 						Part = 'RootPart',
