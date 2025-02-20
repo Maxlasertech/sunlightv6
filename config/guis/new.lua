@@ -5614,12 +5614,8 @@ gui.DisplayOrder = 9999999
 gui.ZIndexBehavior = Enum.ZIndexBehavior.Global
 gui.IgnoreGuiInset = true
 gui.OnTopOfCoreBlur = true
-if mainapi.ThreadFix and identifyexecutor() ~= 'Salad' then
-	gui.Parent = cloneref(game:GetService('CoreGui'))--(gethui and gethui()) or cloneref(game:GetService('CoreGui'))
-else
-	gui.Parent = cloneref(game:GetService('Players')).LocalPlayer.PlayerGui
-	gui.ResetOnSpawn = false
-end
+gui.Parent = cloneref(game:GetService('Players')).LocalPlayer.PlayerGui
+gui.ResetOnSpawn = false
 mainapi.gui = gui
 scaledgui = Instance.new('Frame')
 scaledgui.Name = 'ScaledGui'
