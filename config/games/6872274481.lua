@@ -8551,15 +8551,15 @@ run(function()
 								if entitylib.isAlive and playertpTarget then
 									entitylib.character.HumanoidRootPart.CFrame = playertpTarget.RootPart.CFrame
 								end
-								task.wait()
+								task.wait(0.2)
 							until false
 						end)
 					end
-					task.delay(1.2, function()
-						local suc, res = pcall(function()
+					task.delay(2, function()
+						local suc, ___ = pcall(function()
 							if beds and (bedtppos - entitylib.character.HumanoidRootPart.Position).Magnitude >= 15 or not beds and (playertpTarget.RootPart.Position - entitylib.character.HumanoidRootPart.Position).Magnitude >= 15 then
 								resetchar:SendToServer()
-							end --> tried isnetworkowner and didnt work on salad
+							end
 						end)
 						if not suc then
 							resetchar:SendToServer()
@@ -8568,14 +8568,16 @@ run(function()
 				end))
 				autowin:Clean(vapeEvents.BedwarsBedBreak.Event:Connect(function(bedTable)
 					if bedTable.player.UserId == lplr.UserId then
-						resetchar:SendToServer()
+						task.delay(0.6, function()
+							resetchar:SendToServer()
+						end)
 					end
 				end))
 				autowin:Clean(vapeEvents.EntityDeathEvent.Event:Connect(function(deathTable)
 					local killed = playersService:GetPlayerFromCharacter(deathTable.entityInstance)
 					if playertpTarget and killed == playertpTarget.Entity then
 						pcall(task.cancel, autowinthread)
-						task.delay(0.4, function()
+						task.delay(0.6, function()
 							resetchar:SendToServer()
 						end)
 					end
@@ -8656,7 +8658,7 @@ run(function()
 				if entitylib.isAlive then
 					autorewind:Clean(lplr.Character.Humanoid:GetPropertyChangedSignal('Health'):Connect(function()
 						local ray = workspace:Raycast(entitylib.character.HumanoidRootPart.Position, Vector3.new(0, -50, 0), params)
-						if ray and autorewindraycast.Enabled then
+						if not autorewindraycast.Enabled and true or ray then
 							origin = entitylib.character.HumanoidRootPart.CFrame
 						end
 					end))
