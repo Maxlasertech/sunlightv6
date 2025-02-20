@@ -125,6 +125,14 @@ local function collection(tags, module, customadd, customremove)
 	return objs, cleanFunc
 end
 
+local function getBed()
+	for i: number, v: Model in collectionService:GetTagged('bed') do
+		if (not v:GetAttribute('BedShieldEndTime') or v:GetAttribute('BedShieldEndTime') < workspace:GetServerTimeNow()) and v.Bed.BrickColor ~= lplr.TeamColor then
+			return v
+		end
+	end
+end
+
 local function getBestArmor(slot)
 	local closest, mag = nil, 0
 
@@ -8449,6 +8457,136 @@ run(function()
 end)
 
 run(function()
+	local infinitejump = nil :: table
+	local infinitejumpmode = nil :: table
+	infinitejump = vape.Categories.Blatant:CreateModule({
+		Name = 'InfiniteJump',
+		Function = function(call)
+			if call then
+				infinitejump:Clean(inputService.JumpRequest:Connect(function()
+					if entitylib.isAlive then
+						if infinitejumpmode == 'State' then
+							lplr.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+						else
+							lplr.Character.PrimaryPart.Velocity += Vector3.new(0, 10, 0)
+						end
+					end
+				end))
+			end
+		end
+	})
+	infinitejumpmode = infinitejump:CreateDropdown({
+		Name = 'Mode',
+		List = {'State', 'Velocity'},
+		Default = 'State'
+	})
+end)
+
+run(function()
+	local bedtp = nil :: table
+	bedtp = vape.Categories.Utility:CreateModule({
+		Name = 'BedTP',
+		Function = function(call)
+			if call then
+				local bed = getBed() :: Model?
+				if bed and entitylib.isAlive and store.matchState ~= 0 then
+					if not vape.Modules.AutoWin.Enabled then
+						lplr.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Dead)
+						lplr.CharacterAdded:Wait()
+					end
+					task.wait(0.2)
+					tweenService:Create(lplr.Character.PrimaryPart, TweenInfo.new(0.8), {CFrame = bed.Bed.CFrame + Vector3.new(0, 10, 0)}):Play()
+				end
+				bedtp:Toggle()
+			end
+		end
+	})
+end)
+
+local playertpTarget = nil :: BasePart
+run(function()
+	local playertp = nil :: table
+	local playertpnpc = nil :: table
+	playertp = vape.Categories.Utility:CreateModule({
+		Name = 'PlayerTP',
+		Function = function(call)
+			if call then
+				local plr = entitylib.AllPosition({
+					Range = math.huge,
+					Part = 'RootPart',
+					Players = true,
+					NPCs = playertpnpc.Enabled,
+					Limit = 1,
+				})[1]
+				if plr and entitylib.isAlive and store.matchState ~= 0 then
+					if not vape.Modules.AutoWin.Enabled then
+						lplr.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Dead)
+						lplr.CharacterAdded:Wait()
+					end
+					task.wait(0.2)
+					playertpTarget = plr
+					tweenService:Create(lplr.Character.PrimaryPart, TweenInfo.new(0.8), {CFrame = plr.RootPart.CFrame}):Play()
+				end
+				playertp:Toggle()
+			end
+		end
+	})
+	playertpnpc = playertp:CreateToggle({
+		Name = 'Include NPCs'
+	})
+end)
+
+run(function()
+	local autowin = nil :: table
+	local autowinthread = nil :: thread
+	autowin = vape.Categories.Utility:CreateModule({
+		Name = 'AutoWin',
+		Function = function(call)
+			if call then
+				lplr.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Dead)
+				autowin:Clean(lplr.CharacterAdded:Connect(function()
+					local beds = getBed()
+					if beds then
+						vape.Modules.BedTP:Toggle()
+					else
+						vape.Modules.PlayerTP:Toggle()
+						autowinthread = task.spawn(function()
+							repeat
+								if entitylib.isAlive then
+									lplr.Character.PrimaryPart.CFrame = playertpTarget.RootPart.CFrame
+								end
+								task.wait()
+							until false
+						end)
+					end
+					task.delay(0.8, function()
+						if not isnetworkowner(lplr.Character.PrimaryPart) then
+							lplr.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Dead)
+						end
+					end)
+				end))
+				autowin:Clean(vapeEvents.BedwarsBedBreak.Event:Connect(function(bedTable)
+					if bedTable.player.UserId == lplr.UserId then
+						task.wait(0.2)
+						lplr.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Dead)
+					end
+				end))
+				autowin:Clean(vapeEvents.EntityDeathEvent.Event:Connect(function(deathTable)
+					if deathTable.finalKill then
+						local killed = playersService:GetPlayerFromCharacter(deathTable.entityInstance)
+						if killed == playertpTarget.Entity then
+							pcall(task.cancel, autowinthread)
+							task.wait(0.2)
+							lplr.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Dead)
+						end
+					end
+				end))
+			end
+		end
+	})
+end)
+
+run(function()
 	local antideath = nil :: table
 	local antideathvalue = nil :: table
 	local antideathmodes = {
@@ -8458,23 +8596,27 @@ run(function()
 			end
 		end,
 		Velo = function()
-			lplr.Character.PrimaryPart.Velocity = Vector3.new(0, 200, 0)
+			lplr.Character.PrimaryPart.Velocity += Vector3.new(0, 200, 0)
 		end
 	} :: {() -> ()}
 	local antideathmode = nil :: table
 	antideath = vape.Categories.Blatant:CreateModule({
 		Name = 'AntiDeath',
-		Tooltip = 'Do you hate niggers, yes i do!',
+		Tooltip = 'i hate black individuals',
 		Function = function(call)
 			if call then
 				if entitylib.isAlive then
 					antideath:Clean(lplr.Character.Humanoid:GetPropertyChangedSignal('Health'):Connect(function()
 						if (lplr.Character.Humanoid.MaxHealth - lplr.Character.Humanoid.Health) < antideathvalue.Value then
 							antideathmodes[antideathmode.Value]()
-							notif('Vape', 'Triggered the antideath function.', 10, 'alert')
+							notif('Vape', 'Triggered antideath function.', 10, 'alert')
 						end
 					end))
 				end
+				antideath:Clean(lplr.CharacterAdded:Connect(function()
+					antideath:Toggle()
+					antideath:Toggle()
+				end))
 			end
 		end
 	})
@@ -8488,5 +8630,41 @@ run(function()
 		Min = 1,
 		Max = 100,
 		Default = 40
+	})
+end)
+
+run(function()
+	local autorewind = nil :: table
+	local autorewindraycast = nil :: table
+	
+	local params = RaycastParams.new() :: RaycastParams
+	params.FilterDescendantsInstances = {AntiFallPart}
+	params.FilterType = Enum.RaycastFilterType.Exclude
+
+	local origin = nil :: CFrame
+
+	autorewind = vape.Categories.Utility:CreateModule({
+		Name = 'AutoRewind',
+		Function = function(call)
+			if call then
+				if entitylib.isAlive then
+					autorewind:Clean(lplr.Character.Humanoid:GetPropertyChangedSignal('Health'):Connect(function()
+						local ray = workspace:Raycast(lplr.Character.PrimaryPart.Position, Vector3.new(0, -50, 0), params)
+						if ray and autorewindraycast.Enabled then
+							origin = lplr.Character.PrimaryPart.CFrame
+						end
+					end))
+				end
+				autorewind:Clean(lplr.CharacterAdded:Connect(function(char)
+					tweenService:Create(char.PrimaryPart, TweenInfo.new(0.8), {CFrame = origin}):Play()
+					autorewind:Toggle()
+					autorewind:Toggle()
+				end))
+			end
+		end
+	})
+	autorewindraycast = autorewind:CreateToggle({
+		Name = 'Raycast',
+		Default = true
 	})
 end)
