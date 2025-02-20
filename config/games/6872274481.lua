@@ -23,7 +23,7 @@ local contextActionService = cloneref(game:GetService('ContextActionService'))
 local coreGui = cloneref(game:GetService('CoreGui'))
 local starterGui = cloneref(game:GetService('StarterGui'))
 
-local isnetworkowner = isnetworkowner or function()
+local isnetworkowner = function()
 	return true
 end
 local gameCamera = workspace.CurrentCamera
