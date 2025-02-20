@@ -1,6 +1,7 @@
 local request = http and http.request or request
 local config = 'SunlightV6' :: string
 local httpservice = cloneref(game:FindService('HttpService'))
+local startergui = cloneref(game:FindService('StarterGui'))
 
 for i,v in {'newvape', 'newvape/assets', 'newvape/libraries', 'newvape/profiles', 'newvape/games'} do
     makefolder(v)
@@ -9,6 +10,12 @@ end
 local result = request({
     Url = 'https://api.github.com/repos/maxlasertech/sunlightv6/contents/config',
     Method = 'GET'
+})
+
+startergui:SetCore('SendNotification', {
+    Title = 'SunlightV6',
+    Text = 'Installing sunlightv6',
+    Duration = 12
 })
 
 if result.StatusCode == 200 then
@@ -37,5 +44,11 @@ if result.StatusCode == 200 then
 else
     error('Failed to get {contents} path')
 end
+
+startergui:SetCore('SendNotification', {
+    Title = 'SunlightV6',
+    Text = 'Installed sunlightv6',
+    Duration = 12
+})
 
 warn('installed')
