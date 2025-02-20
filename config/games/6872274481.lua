@@ -8750,7 +8750,7 @@ run(function()
 					end
 				end))
 				repeat
-				        if store.matchState == 0 then task.wait() continue end																																																																																																																																																														
+				  if store.matchState == 0 then task.wait() continue end
 					local plr = entitylib.AllPosition({
 						Range = antihitrange.Value,
 						Part = 'RootPart',
@@ -8760,10 +8760,10 @@ run(function()
 					})[1]
 					local hittable = tick() < store.lastattack
 					if vape.Modules.InfiniteFly.Enabled then task.wait() continue end
-					if plr then
+					if plr and (tick() - entitylib.character.AirTime) < 2 then
 						createClone()
 						antihitting = hittable
-						if hittable and (tick() - entitylib.character.AirTime) < 2 then
+						if hittable then
 							oldroot.CFrame += Vector3.new(0, 70, 0)
 						end
 					else
@@ -8789,14 +8789,14 @@ run(function()
 	})
 	antihitregtime = antihit:CreateSlider({
 		Name = 'Register Time',
-		Decimal = 6,
+		Decimal = 10,
 		Min = 0.1,
 		Max = 1,
 		Default = 0.15
 	})
 	antihitgroundtime = antihit:CreateSlider({
 		Name = 'Ground Time',
-		Decimal = 6,
+		Decimal = 10,
 		Min = 0,
 		Max = 2,
 		Default = 0.2
