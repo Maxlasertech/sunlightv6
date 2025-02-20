@@ -95,15 +95,15 @@ shared.vape = vape
 
 if not shared.VapeIndependent then
 	loadstring(downloadFile('newvape/games/universal.lua'), 'universal')()
-	if isfile('newvape/games/'..game.PlaceId..'.lua') then
+	if isfile('newvape/games/'..game.PlaceId..'.lua') and shared.VapeDeveloper then
 		loadstring(readfile('newvape/games/'..game.PlaceId..'.lua'), tostring(game.PlaceId))(...)
 	else
 		if not shared.VapeDeveloper then
 			local suc, res = pcall(function()
-				return game:HttpGet('https://raw.githubusercontent.com/maxlasertech/sunlightv6/'..readfile('newvape/profiles/commit.txt')..'config/games/'..game.PlaceId..'.lua', true)
+				return game:HttpGet('https://raw.githubusercontent.com/maxlasertech/sunlightv6/'..readfile('newvape/profiles/commit.txt')..'/config/games/'..game.PlaceId..'.lua', true)
 			end)
 			if suc and res ~= '404: Not Found' then
-				loadstring(downloadFile('newvape/games/'..game.PlaceId..'.lua'), tostring(game.PlaceId))(...)
+				loadstring(res)()
 			end
 		end
 	end
