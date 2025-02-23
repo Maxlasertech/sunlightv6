@@ -28,7 +28,7 @@ end
 local playersService = cloneref(game:GetService('Players'))
 
 local function downloadFile(path, func)
-	--if not isfile(path) then
+	if not isfile(path) then
 		local suc, res = pcall(function()
 			return game:HttpGet('https://raw.githubusercontent.com/maxlasertech/sunlightv6/'..readfile('newvape/profiles/commit.txt')..'/config/'..select(1, path:gsub('newvape/', '')), true)
 		end)
@@ -39,7 +39,7 @@ local function downloadFile(path, func)
 			res = '--This watermark is used to delete the file if its cached, remove it to make the file persist after vape updates.\n'..res
 		end
 		writefile(path, res)
-	--end
+	end
 	return (func or readfile)(path)
 end
 
@@ -95,12 +95,18 @@ shared.vape = vape
 
 if not shared.VapeIndependent then
 	loadstring(downloadFile('newvape/games/universal.lua'), 'universal')()
+	if isfile('newvape/games/'..game.PlaceId..'.lua') then
+		loadstring(readfile('newvape/games/'..game.PlaceId..'.lua'), tostring(game.PlaceId))(...)
+	else
+		if not shared.VapeDeveloper then
 			local suc, res = pcall(function()
-				return game:HttpGet('https://raw.githubusercontent.com/maxlasertech/sunlightv6/'..readfile('newvape/profiles/commit.txt')..'/config/games/'..game.PlaceId..'.lua', true)
+				return game:HttpGet('https://raw.githubusercontent.com/maxlasertech/sunlightv6/'..readfile('newvape/profiles/commit.txt')..'config/games/'..game.PlaceId..'.lua', true)
 			end)
 			if suc and res ~= '404: Not Found' then
 				loadstring(downloadFile('newvape/games/'..game.PlaceId..'.lua'), tostring(game.PlaceId))(...)
-		  end
+			end
+		end
+	end
 	finishLoading()
 else
 	vape.Init = finishLoading
